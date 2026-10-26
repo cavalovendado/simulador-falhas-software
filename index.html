@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de Falhas de Software</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#172033;background:#f3f6fb}
+*{box-sizing:border-box}
+body{margin:0;padding:24px}
+main{max-width:820px;margin:auto}
+header{background:#172033;color:#fff;border-radius:20px;padding:26px;margin-bottom:18px}
+header p{color:#dbe5f5;line-height:1.55}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);margin:0 0 10px}
+h2{font-size:1.2rem;margin:0 0 16px}
+.card{background:#fff;border:1px solid #e0e6ef;border-radius:18px;padding:22px;margin:14px 0;box-shadow:0 5px 18px #1720330a}
+.field{margin:18px 0}
+label{display:flex;justify-content:space-between;gap:12px;font-weight:650;margin-bottom:10px}
+input[type=range]{width:100%;accent-color:#315ee7}
+small,.muted{color:#65718a}
+select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font:inherit}
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.result{background:#f5f7fb;padding:18px;border-radius:14px;min-width:0}
+.result span{display:block;color:#65718a;font-size:.9rem;margin-bottom:8px}
+.money{font-size:clamp(1.25rem,4vw,1.8rem);font-weight:800;overflow-wrap:anywhere}
+.status{padding:14px;border-radius:12px;margin-top:14px;font-weight:650}
+.bad{background:#fff0f0;color:#a51e2b}
+.good{background:#eaf8ef;color:#17683a}
+.explain{line-height:1.65}
+footer{text-align:center;color:#65718a;font-size:.85rem;padding:16px}
+@media(max-width:520px){body{padding:12px}.card{padding:17px}.results{grid-template-columns:1fr}header{padding:22px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Simulador de Falhas de Software</h1>
+  <p>Use este exemplo na apresentação para demonstrar como um teste compara o resultado esperado com o resultado produzido pelo sistema.</p>
+</header>
+
+<section class="card">
+  <h2>1. Configure a venda</h2>
+  <div class="field">
+    <label for="price"><span>Preço do produto</span><strong id="priceLabel">R$ 100,00</strong></label>
+    <input id="price" type="range" min="10" max="500" step="10" value="100">
+    <small>De R$ 10 a R$ 500</small>
+  </div>
+  <div class="field">
+    <label for="discount"><span>Desconto solicitado</span><strong id="discountLabel">10%</strong></label>
+    <input id="discount" type="range" min="0" max="50" step="5" value="10">
+    <small>De 0% a 50%</small>
+  </div>
+  <div class="field">
+    <label for="mode">Versão do sistema</label>
+    <select id="mode">
+      <option value="bug">Sistema com defeito (subtrai R$ 20 fixos)</option>
+      <option value="fixed">Sistema corrigido (calcula o percentual)</option>
+    </select>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. Compare os resultados</h2>
+  <div class="results">
+    <div class="result">
+      <span>Resultado esperado</span>
+      <div class="money" id="expected">R$ 90,00</div>
+    </div>
+    <div class="result">
+      <span>Resultado observado</span>
+      <div class="money" id="observed">R$ 80,00</div>
+    </div>
+  </div>
+  <div id="status" class="status bad" role="status">Falha detectada: os resultados são diferentes.</div>
+  <p class="explain" id="details">O sistema apresentou um valor diferente do esperado. Registre o defeito, investigue a causa, corrija e repita os testes.</p>
+</section>
+
+<section class="card">
+  <h2>3. Como isso se relaciona ao teste de software?</h2>
+  <p class="explain"><strong>Erro:</strong> alguém implementou uma fórmula incorreta.</p>
+  <p class="explain"><strong>Defeito:</strong> a fórmula errada ficou no código.</p>
+  <p class="explain"><strong>Falha:</strong> durante a execução, o sistema calculou um valor incorreto.</p>
+  <p class="explain"><strong>Plano de ação:</strong> registrar o problema, corrigir a fórmula, testar vários preços e descontos e executar testes de regressão.</p>
+</section>
+
+<footer>Exemplo didático para apresentação escolar · Não processa pagamentos reais</footer>
+</main>
+<script>
+const price = document.getElementById('price');
+const discount = document.getElementById('discount');
+const mode = document.getElementById('mode');
+const money = value => value.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+function update(){
+  const p = Number(price.value);
+  const d = Number(discount.value);
+  const expected = p * (1 - d / 100);
+  const observed = mode.value === 'bug' ? Math.max(0, p - 20) : expected;
+  document.getElementById('priceLabel').textContent = money(p);
+  document.getElementById('discountLabel').textContent = d + '%';
+  document.getElementById('expected').textContent = money(expected);
+  document.getElementById('observed').textContent = money(observed);
+  const failed = Math.abs(expected - observed) > 0.005;
+  const status = document.getElementById('status');
+  status.className = 'status ' + (failed ? 'bad' : 'good');
+  status.textContent = failed
+    ? '⚠ Falha detectada: os resultados são diferentes.'
+    : '✓ Teste passou: os resultados estão iguais para estes valores.';
+  document.getElementById('details').textContent = failed
+    ? 'O resultado observado difere do esperado. Registre o defeito, investigue a causa, corrija a fórmula e repita os testes.'
+    : 'Para esta combinação, o resultado observado corresponde ao esperado. Teste também outros preços e percentuais para procurar defeitos.';
+}
+price.addEventListener('input',update);
+discount.addEventListener('input',update);
+mode.addEventListener('change',update);
+update();
+</script>
+</body>
+</html>
